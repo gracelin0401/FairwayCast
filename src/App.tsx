@@ -24,7 +24,6 @@ import { TodayView } from './components/TodayView';
 import { WeekView } from './components/WeekView';
 import { LiveConditionsView } from './components/LiveConditionsView';
 import { HourlyBreakdownModal } from './components/HourlyBreakdownModal';
-import { StrategyMiroBoard } from './components/StrategyMiroBoard';
 import { TeeTimePlannerModal } from './components/TeeTimePlannerModal';
 import { DataGovSgModal } from './components/DataGovSgModal';
 import { DisqusComments } from './components/DisqusComments';
@@ -32,7 +31,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function App() {
   const [selectedCourse, setSelectedCourse] = useState<GolfCourse>(POPULAR_GOLF_COURSES[0]);
-  const [activeTab, setActiveTab] = useState<'now' | 'today' | 'week' | 'live' | 'community' | 'miro'>('now');
+  const [activeTab, setActiveTab] = useState<'now' | 'today' | 'week' | 'live' | 'community'>('now');
   const [unit, setUnit] = useState<'metric' | 'imperial'>('metric');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -127,9 +126,7 @@ export default function App() {
         ) : (
           <div>
             {/* Prominent High-Priority Lightning Alert Banner (Visible on all weather tabs) */}
-            {activeTab !== 'miro' && (
-              <LightningAlertBanner lightning={lightningAlert} />
-            )}
+            <LightningAlertBanner lightning={lightningAlert} />
 
             {/* View 1: Home / Now View */}
             {activeTab === 'now' && (
@@ -183,9 +180,6 @@ export default function App() {
             {activeTab === 'community' && (
               <DisqusComments course={selectedCourse} embedded={false} />
             )}
-
-            {/* View 6: Miro Product Strategy Board */}
-            {activeTab === 'miro' && <StrategyMiroBoard />}
           </div>
         )}
       </main>

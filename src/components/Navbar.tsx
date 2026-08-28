@@ -11,7 +11,6 @@ import {
   Thermometer,
   RefreshCw,
   ChevronDown,
-  Kanban,
   MessageSquare,
 } from 'lucide-react';
 import { GolfCourse } from '../types';
@@ -20,8 +19,8 @@ import { POPULAR_GOLF_COURSES } from '../data/courses';
 interface NavbarProps {
   selectedCourse: GolfCourse;
   onSelectCourse: (course: GolfCourse) => void;
-  activeTab: 'now' | 'today' | 'week' | 'live' | 'community' | 'miro';
-  onChangeTab: (tab: 'now' | 'today' | 'week' | 'live' | 'community' | 'miro') => void;
+  activeTab: 'now' | 'today' | 'week' | 'live' | 'community';
+  onChangeTab: (tab: 'now' | 'today' | 'week' | 'live' | 'community') => void;
   unit: 'metric' | 'imperial';
   onToggleUnit: () => void;
   isRefreshing: boolean;
@@ -299,19 +298,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <MessageSquare className="w-4 h-4 text-[#2D4635] dark:text-[#A8C2A1]" />
               <span>Clubhouse Chat</span>
-            </button>
-
-            <button
-              id="tab-miro"
-              onClick={() => onChangeTab('miro')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
-                activeTab === 'miro'
-                  ? 'bg-[#FDF8F3] dark:bg-[#2A231C] text-[#8A6F49] dark:text-[#D4BFA4] border border-[#F9F0E5] dark:border-[#3D3328] shadow-xs'
-                  : 'text-[#6B7D6A] dark:text-[#9FB19E] hover:text-[#8A6F49] hover:bg-[#FDF8F3] dark:hover:bg-[#2A231C]'
-              }`}
-            >
-              <Kanban className="w-4 h-4 text-[#A68A64]" />
-              <span>Miro Strategy Board</span>
             </button>
           </nav>
 

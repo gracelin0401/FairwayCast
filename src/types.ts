@@ -188,12 +188,3 @@ export interface TeeTimeWindow {
   verdict: 'Recommended' | 'Good Option' | 'Challenging' | 'High Delay Risk';
   highlights: string[];
 }
-
-export interface StrategySticky {
-  id: string;
-  section: string;
-  color: 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'orange';
-  title: string;
-  content: string[];
-  tags: string[];
-}

@@ -37,7 +37,7 @@ interface NowViewProps {
   lightning: LightningAlert;
   microcast: MicrocastInterval[];
   unit: 'metric' | 'imperial';
-  onNavigateTab: (tab: 'today' | 'week' | 'live' | 'miro') => void;
+  onNavigateTab: (tab: 'today' | 'week' | 'live') => void;
   onOpenPlanner: () => void;
 }
 
