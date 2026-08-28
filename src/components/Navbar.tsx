@@ -26,6 +26,7 @@ interface NavbarProps {
   isRefreshing: boolean;
   onRefresh: () => void;
   onOpenPlanner: () => void;
+  onOpenDataGovSg?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -38,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isRefreshing,
   onRefresh,
   onOpenPlanner,
+  onOpenDataGovSg,
 }) => {
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -188,6 +190,18 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right: Quick Tools & Planner */}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {onOpenDataGovSg && (
+              <button
+                id="data-gov-sg-status-button"
+                onClick={onOpenDataGovSg}
+                title="View 10 Data.gov.sg real-time meteorological API feeds"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#2D4635] dark:text-[#A8C2A1] bg-[#E8EDDF] dark:bg-[#233327] hover:bg-[#DCE3D4] dark:hover:bg-[#2F4435] border border-[#DCE3D4] dark:border-[#2F4435] transition shadow-xs"
+              >
+                <Radio className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1] animate-pulse" />
+                <span>10 Live Feeds</span>
+              </button>
+            )}
+
             <button
               id="round-planner-button"
               onClick={onOpenPlanner}

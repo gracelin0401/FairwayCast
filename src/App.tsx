@@ -26,6 +26,7 @@ import { LiveConditionsView } from './components/LiveConditionsView';
 import { HourlyBreakdownModal } from './components/HourlyBreakdownModal';
 import { StrategyMiroBoard } from './components/StrategyMiroBoard';
 import { TeeTimePlannerModal } from './components/TeeTimePlannerModal';
+import { DataGovSgModal } from './components/DataGovSgModal';
 import { Loader2 } from 'lucide-react';
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
   const [hourlyModalData, setHourlyModalData] = useState<HourlyForecast[]>([]);
   const [hourlyModalInitialHour, setHourlyModalInitialHour] = useState<number | undefined>(undefined);
   const [plannerModalOpen, setPlannerModalOpen] = useState<boolean>(false);
+  const [dataGovSgModalOpen, setDataGovSgModalOpen] = useState<boolean>(false);
 
   // Load weather when course changes
   const loadWeatherData = async (course: GolfCourse, showRefreshAnim = false) => {
@@ -109,6 +111,7 @@ export default function App() {
         isRefreshing={isRefreshing}
         onRefresh={() => loadWeatherData(selectedCourse, true)}
         onOpenPlanner={() => setPlannerModalOpen(true)}
+        onOpenDataGovSg={() => setDataGovSgModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -199,6 +202,16 @@ export default function App() {
           onClose={() => setPlannerModalOpen(false)}
           hourly={hourlyForecast}
           unit={unit}
+        />
+      )}
+
+      {/* Singapore Data.gov.sg 10-Endpoint Telemetry Modal */}
+      {currentWeather && (
+        <DataGovSgModal
+          course={selectedCourse}
+          isOpen={dataGovSgModalOpen}
+          onClose={() => setDataGovSgModalOpen(false)}
+          current={currentWeather}
         />
       )}
 

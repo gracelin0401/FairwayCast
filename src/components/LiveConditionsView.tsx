@@ -19,6 +19,11 @@ import {
   Flame,
   Droplets,
   Eye,
+  Thermometer,
+  Sun,
+  CloudRain,
+  Activity,
+  Sparkles,
 } from 'lucide-react';
 
 interface LiveConditionsViewProps {
@@ -345,6 +350,85 @@ export const LiveConditionsView: React.FC<LiveConditionsViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 4. Singapore NEA / MSS Calibrated Surface Station Grid */}
+      {current.sgTelemetry && (
+        <div className="bg-[#E8EDDF] dark:bg-[#233327] rounded-3xl border border-[#DCE3D4] dark:border-[#2F4435] p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-[#2D4635] text-white">
+                <Radio className="w-4 h-4 text-[#A8C2A1]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-[#1B261E] dark:text-[#E8EFE8]">
+                  Singapore Data.gov.sg Calibrated Station Grid
+                </h3>
+                <p className="text-xs text-[#6B7D6A] dark:text-[#9FB19E]">
+                  Official meteorological sensors mapped to {course.name} ({course.region})
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs font-mono font-semibold px-3 py-1 bg-white dark:bg-[#1A261E] text-[#2D4635] dark:text-[#A8C2A1] rounded-full border border-[#DCE3D4] dark:border-[#2F4435] self-start sm:self-auto">
+              Town Area: {current.sgTelemetry.twoHourForecast.area}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div className="p-3.5 bg-white dark:bg-[#1A261E] rounded-2xl border border-[#E2E8DF] dark:border-[#2A3B2E]">
+              <div className="text-[#6B7D6A] font-medium flex items-center justify-between">
+                <span>Air Temperature</span>
+                <Thermometer className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+              </div>
+              <div className="text-lg font-bold font-mono text-[#1B261E] dark:text-[#E8EFE8] mt-1">
+                {current.sgTelemetry.airTemperature.celsius}°C
+              </div>
+              <div className="text-[10px] text-[#6B7D6A] mt-0.5 truncate">
+                Station: {current.sgTelemetry.airTemperature.stationName} ({current.sgTelemetry.airTemperature.distanceKm} km)
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-white dark:bg-[#1A261E] rounded-2xl border border-[#E2E8DF] dark:border-[#2A3B2E]">
+              <div className="text-[#6B7D6A] font-medium flex items-center justify-between">
+                <span>Rain Gauge Sensor</span>
+                <CloudRain className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+              </div>
+              <div className="text-lg font-bold font-mono text-[#1B261E] dark:text-[#E8EFE8] mt-1">
+                {current.sgTelemetry.rainfall.rainfallMm} mm/h
+              </div>
+              <div className="text-[10px] text-[#6B7D6A] mt-0.5 truncate">
+                Station: {current.sgTelemetry.rainfall.stationName} ({current.sgTelemetry.rainfall.distanceKm} km)
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-white dark:bg-[#1A261E] rounded-2xl border border-[#E2E8DF] dark:border-[#2A3B2E]">
+              <div className="text-[#6B7D6A] font-medium flex items-center justify-between">
+                <span>Surface Anemometer</span>
+                <Wind className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+              </div>
+              <div className="text-lg font-bold font-mono text-[#1B261E] dark:text-[#E8EFE8] mt-1">
+                {current.sgTelemetry.windSpeed.speedKmh} km/h
+              </div>
+              <div className="text-[10px] text-[#6B7D6A] mt-0.5 truncate">
+                Station: {current.sgTelemetry.windSpeed.stationName} ({current.sgTelemetry.windSpeed.distanceKm} km)
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-white dark:bg-[#1A261E] rounded-2xl border border-[#E2E8DF] dark:border-[#2A3B2E]">
+              <div className="text-[#6B7D6A] font-medium flex items-center justify-between">
+                <span>PSI & PM2.5 Quality</span>
+                <Activity className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+              </div>
+              <div className="text-lg font-bold font-mono text-[#1B261E] dark:text-[#E8EFE8] mt-1">
+                PSI {current.sgTelemetry.airQuality.psi}
+              </div>
+              <div className="text-[10px] text-[#6B7D6A] mt-0.5 truncate">
+                PM2.5: {current.sgTelemetry.airQuality.pm25} µg/m³ ({current.sgTelemetry.airQuality.region.toUpperCase()})
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -79,6 +79,45 @@ export interface DailyForecast {
   hourly: HourlyForecast[];
 }
 
+export interface DataGovSgTelemetry {
+  twoHourForecast: {
+    area: string;
+    forecast: string;
+    validPeriod: string;
+  };
+  airTemperature: {
+    celsius: number;
+    stationName: string;
+    distanceKm: number;
+  };
+  rainfall: {
+    rainfallMm: number;
+    stationName: string;
+    distanceKm: number;
+  };
+  relativeHumidity: {
+    percent: number;
+    stationName: string;
+    distanceKm: number;
+  };
+  windSpeed: {
+    speedKmh: number;
+    speedKnots: number;
+    stationName: string;
+    distanceKm: number;
+  };
+  uv: {
+    index: number;
+  };
+  airQuality: {
+    psi: number;
+    pm25: number;
+    region: string;
+  };
+  twentyFourHrGeneral?: any;
+  fourDayForecasts?: any[];
+}
+
 export interface CurrentWeather {
   tempC: number;
   feelsLikeC: number;
@@ -103,6 +142,7 @@ export interface CurrentWeather {
   isDay: boolean;
   observedAt: string;
   isLiveSensor: boolean;
+  sgTelemetry?: DataGovSgTelemetry;
 }
 
 export interface LightningAlert {

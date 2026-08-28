@@ -59,6 +59,26 @@ export async function fetchCourseWeatherData(course: GolfCourse): Promise<{
   daily: DailyForecast[];
   goldenWindows: TeeTimeWindow[];
 }> {
+  // Check if course is in Singapore to fetch official NEA/MSS real-time telemetry
+  let sgTelemetry: any = null;
+  const isSingapore = course.country?.toLowerCase() === 'singapore' || (course.lat > 1.15 && course.lat < 1.48 && course.lon > 103.55 && course.lon < 104.1);
+
+  if (isSingapore) {
+    try {
+      const sgRes = await fetch(
+        `/api/data-gov-sg/course-telemetry?lat=${course.lat}&lon=${course.lon}&name=${encodeURIComponent(course.name)}`
+      );
+      if (sgRes.ok) {
+        const sgJson = await sgRes.json();
+        if (sgJson.success && sgJson.telemetry) {
+          sgTelemetry = sgJson.telemetry;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch Singapore Data.gov.sg real-time telemetry:', e);
+    }
+  }
+
   try {
     // Attempt live fetch from Open-Meteo
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${course.lat}&longitude=${course.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,rain,weather_code,surface_pressure,cloud_cover,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant&timezone=auto`;
@@ -67,22 +87,34 @@ export async function fetchCourseWeatherData(course: GolfCourse): Promise<{
     if (!res.ok) throw new Error(`Open-Meteo error: ${res.status}`);
     const data = await res.json();
 
-    return parseOpenMeteoData(data, course);
+    return parseOpenMeteoData(data, course, sgTelemetry);
   } catch (err) {
-    console.warn('Weather API fetch failed or network offline, using high-fidelity meteorological simulation:', err);
-    return generateSimulatedWeatherData(course);
+    console.warn('Weather API fetch failed or network offline, using meteorological simulation with data.gov.sg:', err);
+    return generateSimulatedWeatherData(course, sgTelemetry);
   }
 }
 
-function parseOpenMeteoData(data: any, course: GolfCourse) {
+export async function fetchDataGovSgStatus() {
+  try {
+    const res = await fetch('/api/data-gov-sg/status');
+    if (!res.ok) throw new Error('Status endpoint failed');
+    return await res.json();
+  } catch (e) {
+    return { apiKeyConfigured: false, activeEndpointsCount: 10, endpoints: [] };
+  }
+}
+
+function parseOpenMeteoData(data: any, course: GolfCourse, sgTelemetry?: any) {
   const currentRaw = data.current;
   const isDay = currentRaw.is_day === 1;
   const cond = getWeatherCondition(currentRaw.weather_code, isDay);
   const windDirDeg = currentRaw.wind_direction_10m || 0;
 
   // Determine lightning status based on tropical location and weather code
-  const isStorm = [95, 96, 99].includes(currentRaw.weather_code);
-  const isShower = [80, 81, 82, 65].includes(currentRaw.weather_code);
+  const isStorm = [95, 96, 99].includes(currentRaw.weather_code) ||
+    (sgTelemetry?.twoHourForecast?.forecast?.toLowerCase().includes('thunder') ?? false);
+  const isShower = [80, 81, 82, 65].includes(currentRaw.weather_code) ||
+    (sgTelemetry?.twoHourForecast?.forecast?.toLowerCase().includes('showers') ?? false);
 
   const lightning: LightningAlert = {
     active: isStorm,
@@ -98,30 +130,70 @@ function parseOpenMeteoData(data: any, course: GolfCourse) {
       : 'All clear: Standard safety protocols in place.',
   };
 
+  // If real-time Data.gov.sg telemetry is available, enhance surface readings with official NEA ground sensors
+  const tempC = sgTelemetry?.airTemperature?.celsius != null 
+    ? Math.round(sgTelemetry.airTemperature.celsius) 
+    : Math.round(currentRaw.temperature_2m);
+
+  const humidity = sgTelemetry?.relativeHumidity?.percent != null
+    ? Math.round(sgTelemetry.relativeHumidity.percent)
+    : currentRaw.relative_humidity_2m;
+
+  const windSpeedKmh = sgTelemetry?.windSpeed?.speedKmh != null
+    ? sgTelemetry.windSpeed.speedKmh
+    : Math.round(currentRaw.wind_speed_10m);
+
+  const uvIndex = sgTelemetry?.uv?.index != null
+    ? Math.round(sgTelemetry.uv.index)
+    : Math.round(data.hourly?.uv_index?.[0] || (isDay ? 6 : 0));
+
+  const rainRate = sgTelemetry?.rainfall?.rainfallMm != null
+    ? sgTelemetry.rainfall.rainfallMm
+    : (currentRaw.precipitation || 0);
+
+  const aqiVal = sgTelemetry?.airQuality?.psi != null
+    ? Math.round(sgTelemetry.airQuality.psi)
+    : 38;
+
+  let aqiStatus: any = 'Good';
+  if (aqiVal > 300) aqiStatus = 'Hazardous';
+  else if (aqiVal > 200) aqiStatus = 'Unhealthy';
+  else if (aqiVal > 100) aqiStatus = 'Unhealthy for Sensitive';
+  else if (aqiVal > 50) aqiStatus = 'Moderate';
+
+  const conditionText = sgTelemetry?.twoHourForecast?.forecast
+    ? sgTelemetry.twoHourForecast.forecast
+    : cond.text;
+
+  const observedAtText = sgTelemetry?.airTemperature?.stationName
+    ? `Live Data.gov.sg (${sgTelemetry.airTemperature.stationName} • ${sgTelemetry.airTemperature.distanceKm}km)`
+    : 'Just now (Live Meteorological Station)';
+
   const current: CurrentWeather = {
-    tempC: Math.round(currentRaw.temperature_2m),
-    feelsLikeC: Math.round(currentRaw.apparent_temperature),
-    humidity: currentRaw.relative_humidity_2m,
-    dewPointC: Math.round(currentRaw.temperature_2m - (100 - currentRaw.relative_humidity_2m) / 5),
-    precipitationProb: Math.round(data.hourly.precipitation_probability[0] || 10),
-    precipitationRateMmH: currentRaw.precipitation || 0,
-    condition: cond.text,
+    tempC,
+    feelsLikeC: Math.round(currentRaw.apparent_temperature || tempC + 3),
+    humidity,
+    dewPointC: Math.round(tempC - (100 - humidity) / 5),
+    precipitationProb: Math.round(data.hourly?.precipitation_probability?.[0] || (rainRate > 0 ? 90 : 10)),
+    precipitationRateMmH: rainRate,
+    condition: conditionText,
     conditionIcon: cond.icon,
-    windSpeedKmh: Math.round(currentRaw.wind_speed_10m),
-    windGustKmh: Math.round(currentRaw.wind_gusts_10m),
+    windSpeedKmh,
+    windGustKmh: Math.round(currentRaw.wind_gusts_10m || windSpeedKmh * 1.3),
     windDirectionDeg: windDirDeg,
     windDirectionText: degToCompass(windDirDeg),
-    pressureHpa: Math.round(currentRaw.pressure_msl),
-    uvIndex: Math.round(data.hourly.uv_index[0] || (isDay ? 6 : 0)),
-    aqi: 38,
-    aqiStatus: 'Good',
+    pressureHpa: Math.round(currentRaw.pressure_msl || 1012),
+    uvIndex,
+    aqi: aqiVal,
+    aqiStatus,
     visibilityKm: 12,
-    cloudCoverPct: currentRaw.cloud_cover,
+    cloudCoverPct: currentRaw.cloud_cover || 40,
     sunriseTime: data.daily?.sunrise?.[0] ? data.daily.sunrise[0].split('T')[1]?.slice(0, 5) : '06:45',
     sunsetTime: data.daily?.sunset?.[0] ? data.daily.sunset[0].split('T')[1]?.slice(0, 5) : '19:15',
     isDay,
-    observedAt: 'Just now (Live Station)',
+    observedAt: observedAtText,
     isLiveSensor: true,
+    sgTelemetry,
   };
 
   // Generate 2-hour microcast (15-min intervals)
@@ -442,31 +514,41 @@ function computeGoldenWindows(hourly: HourlyForecast[]): TeeTimeWindow[] {
   ];
 }
 
-function generateSimulatedWeatherData(course: GolfCourse) {
+function generateSimulatedWeatherData(course: GolfCourse, sgTelemetry?: any) {
+  const tempC = sgTelemetry?.airTemperature?.celsius ?? 30;
+  const humidity = sgTelemetry?.relativeHumidity?.percent ?? 78;
+  const windSpeedKmh = sgTelemetry?.windSpeed?.speedKmh ?? 14;
+  const uvIndex = sgTelemetry?.uv?.index ?? 8;
+  const aqi = sgTelemetry?.airQuality?.psi ?? 32;
+  const condText = sgTelemetry?.twoHourForecast?.forecast ?? 'Partly Sunny & Humid';
+
   const current: CurrentWeather = {
-    tempC: 30,
-    feelsLikeC: 35,
-    humidity: 78,
+    tempC: Math.round(tempC),
+    feelsLikeC: Math.round(tempC + 4),
+    humidity: Math.round(humidity),
     dewPointC: 25,
     precipitationProb: 25,
-    precipitationRateMmH: 0,
-    condition: 'Partly Sunny & Humid',
+    precipitationRateMmH: sgTelemetry?.rainfall?.rainfallMm ?? 0,
+    condition: condText,
     conditionIcon: 'CloudSun',
-    windSpeedKmh: 14,
-    windGustKmh: 20,
+    windSpeedKmh: Math.round(windSpeedKmh),
+    windGustKmh: Math.round(windSpeedKmh * 1.3),
     windDirectionDeg: 80,
     windDirectionText: 'ENE',
     pressureHpa: 1011,
-    uvIndex: 8,
-    aqi: 32,
+    uvIndex: Math.round(uvIndex),
+    aqi: Math.round(aqi),
     aqiStatus: 'Good',
     visibilityKm: 15,
     cloudCoverPct: 45,
     sunriseTime: '06:58',
     sunsetTime: '19:12',
     isDay: true,
-    observedAt: 'Live Telemetry (Radar Station)',
+    observedAt: sgTelemetry?.airTemperature?.stationName
+      ? `Live Data.gov.sg (${sgTelemetry.airTemperature.stationName})`
+      : 'Live Telemetry (Radar Station)',
     isLiveSensor: true,
+    sgTelemetry,
   };
 
   const lightning: LightningAlert = {

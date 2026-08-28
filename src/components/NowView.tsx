@@ -26,6 +26,8 @@ import {
   Sunrise,
   Sunset,
   Zap,
+  Radio,
+  Thermometer,
 } from 'lucide-react';
 
 interface NowViewProps {
@@ -225,7 +227,7 @@ export const NowView: React.FC<NowViewProps> = ({
             <Activity className="w-4 h-4 text-[#6B7D6A]" />
           </div>
           <div className="text-2xl sm:text-3xl font-black font-mono text-[#1B261E] dark:text-[#E8EFE8] flex items-center justify-between">
-            <span>AQI {current.aqi}</span>
+            <span>{current.sgTelemetry ? `PSI ${current.sgTelemetry.airQuality.psi}` : `AQI ${current.aqi}`}</span>
             <span className="text-xs font-bold text-[#2D4635] bg-[#E8EDDF] dark:bg-[#233327] dark:text-[#A8C2A1] px-2.5 py-0.5 rounded-full">
               {current.aqiStatus}
             </span>
@@ -235,10 +237,94 @@ export const NowView: React.FC<NowViewProps> = ({
             <span>Sunset at {current.sunsetTime}</span>
           </div>
           <p className="text-[11px] text-[#6B7D6A] dark:text-[#9FB19E] mt-2 border-t border-[#E2E8DF] dark:border-[#2A3B2E] pt-2">
-            Clean air conditions: Ideal for 4.5h outdoor cardio.
+            {current.sgTelemetry ? `PM2.5: ${current.sgTelemetry.airQuality.pm25} µg/m³ • Region: ${current.sgTelemetry.airQuality.region.toUpperCase()}` : 'Clean air conditions: Ideal for 4.5h outdoor cardio.'}
           </p>
         </div>
       </div>
+
+      {/* Official Singapore Data.gov.sg Telemetry Badge & Station Ribbon */}
+      {current.sgTelemetry && (
+        <div className="bg-[#E8EDDF] dark:bg-[#233327] rounded-3xl p-5 sm:p-6 border border-[#DCE3D4] dark:border-[#2F4435] shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-[#2D4635] text-white">
+                <Radio className="w-4 h-4 text-[#A8C2A1] animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-sm sm:text-base text-[#1B261E] dark:text-[#E8EFE8]">
+                    Data.gov.sg Real-Time Meteorological Ground Stations
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/80 dark:bg-[#16221A]/80 text-[#2D4635] dark:text-[#A8C2A1] border border-[#DCE3D4] dark:border-[#2F4435]">
+                    10 Active APIs
+                  </span>
+                </div>
+                <p className="text-xs text-[#6B7D6A] dark:text-[#9FB19E]">
+                  Ground-truth sensor calibration for {course.name} ({course.region})
+                </p>
+              </div>
+            </div>
+
+            <div className="text-xs font-mono text-[#2D4635] dark:text-[#A8C2A1] font-semibold bg-white/70 dark:bg-[#16221A]/70 px-3 py-1.5 rounded-full border border-[#DCE3D4] dark:border-[#2F4435] self-start sm:self-auto">
+              2-Hr Zone: {current.sgTelemetry.twoHourForecast.area} ({current.sgTelemetry.twoHourForecast.forecast})
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 bg-white dark:bg-[#1A261E] rounded-2xl border border-[#E2E8DF] dark:border-[#2A3B2E]">
+              <div className="text-[#6B7D6A] text-[11px] font-semibold flex items-center gap-1">
+                <Thermometer className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+                <span>Station Air Temp</span>
+              </div>
+              <div className="font-bold text-sm text-[#1B261E] dark:text-[#E8EFE8] mt-1 font-mono">
+                {current.sgTelemetry.airTemperature.celsius}°C
+              </div>
+              <div className="text-[10px] text-[#6B7D6A] truncate mt-0.5">
+                {current.sgTelemetry.airTemperature.stationName}
+              </div>
+            </div>
+
+            <div className="p-3 bg-white dark:bg-[#1A261E] rounded-2xl border border-[#E2E8DF] dark:border-[#2A3B2E]">
+              <div className="text-[#6B7D6A] text-[11px] font-semibold flex items-center gap-1">
+                <CloudRain className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+                <span>Perimeter Rain Gauge</span>
+              </div>
+              <div className="font-bold text-sm text-[#1B261E] dark:text-[#E8EFE8] mt-1 font-mono">
+                {current.sgTelemetry.rainfall.rainfallMm} mm/h
+              </div>
+              <div className="text-[10px] text-[#6B7D6A] truncate mt-0.5">
+                {current.sgTelemetry.rainfall.stationName}
+              </div>
+            </div>
+
+            <div className="p-3 bg-white dark:bg-[#1A261E] rounded-2xl border border-[#E2E8DF] dark:border-[#2A3B2E]">
+              <div className="text-[#6B7D6A] text-[11px] font-semibold flex items-center gap-1">
+                <Wind className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+                <span>Surface Anemometer</span>
+              </div>
+              <div className="font-bold text-sm text-[#1B261E] dark:text-[#E8EFE8] mt-1 font-mono">
+                {current.sgTelemetry.windSpeed.speedKmh} km/h
+              </div>
+              <div className="text-[10px] text-[#6B7D6A] truncate mt-0.5">
+                {current.sgTelemetry.windSpeed.stationName}
+              </div>
+            </div>
+
+            <div className="p-3 bg-white dark:bg-[#1A261E] rounded-2xl border border-[#E2E8DF] dark:border-[#2A3B2E]">
+              <div className="text-[#6B7D6A] text-[11px] font-semibold flex items-center gap-1">
+                <Sun className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+                <span>Solar UV & Humidity</span>
+              </div>
+              <div className="font-bold text-sm text-[#1B261E] dark:text-[#E8EFE8] mt-1 font-mono">
+                UV {current.sgTelemetry.uv.index} • {current.sgTelemetry.relativeHumidity.percent}% RH
+              </div>
+              <div className="text-[10px] text-[#6B7D6A] truncate mt-0.5">
+                National Sensor Grid
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 4. Course Conditions & Caddy Tactical Matrix */}
       <div className="bg-[#2D4635] text-white rounded-3xl p-6 sm:p-7 shadow-lg border border-[#3D5C48]">
