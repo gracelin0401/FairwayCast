@@ -1,0 +1,6 @@
+{
+  "name": "FairwayCast - Golf Weather & Golfability",
+  "description": "Actionable golf weather tracker with Golfability score (0-100), lightning radar warnings, 2-hour microcasts, optimal tee-time recommender, and 7-day course planning.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
