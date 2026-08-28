@@ -12,6 +12,7 @@ import {
   RefreshCw,
   ChevronDown,
   Kanban,
+  MessageSquare,
 } from 'lucide-react';
 import { GolfCourse } from '../types';
 import { POPULAR_GOLF_COURSES } from '../data/courses';
@@ -19,8 +20,8 @@ import { POPULAR_GOLF_COURSES } from '../data/courses';
 interface NavbarProps {
   selectedCourse: GolfCourse;
   onSelectCourse: (course: GolfCourse) => void;
-  activeTab: 'now' | 'today' | 'week' | 'live' | 'miro';
-  onChangeTab: (tab: 'now' | 'today' | 'week' | 'live' | 'miro') => void;
+  activeTab: 'now' | 'today' | 'week' | 'live' | 'community' | 'miro';
+  onChangeTab: (tab: 'now' | 'today' | 'week' | 'live' | 'community' | 'miro') => void;
   unit: 'metric' | 'imperial';
   onToggleUnit: () => void;
   isRefreshing: boolean;
@@ -285,6 +286,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Radio className="w-4 h-4 text-[#2D4635] dark:text-[#A8C2A1]" />
               <span>Live Radar & Wind</span>
+            </button>
+
+            <button
+              id="tab-community"
+              onClick={() => onChangeTab('community')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
+                activeTab === 'community'
+                  ? 'bg-[#E8EDDF] dark:bg-[#233327] text-[#2D4635] dark:text-[#A8C2A1] border border-[#DCE3D4] dark:border-[#2F4435] shadow-xs'
+                  : 'text-[#6B7D6A] dark:text-[#9FB19E] hover:text-[#1B261E] dark:hover:text-[#E8EFE8] hover:bg-[#F0F4EE] dark:hover:bg-[#1E2D22]'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4 text-[#2D4635] dark:text-[#A8C2A1]" />
+              <span>Clubhouse Chat</span>
             </button>
 
             <button

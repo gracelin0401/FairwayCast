@@ -27,11 +27,12 @@ import { HourlyBreakdownModal } from './components/HourlyBreakdownModal';
 import { StrategyMiroBoard } from './components/StrategyMiroBoard';
 import { TeeTimePlannerModal } from './components/TeeTimePlannerModal';
 import { DataGovSgModal } from './components/DataGovSgModal';
+import { DisqusComments } from './components/DisqusComments';
 import { Loader2 } from 'lucide-react';
 
 export default function App() {
   const [selectedCourse, setSelectedCourse] = useState<GolfCourse>(POPULAR_GOLF_COURSES[0]);
-  const [activeTab, setActiveTab] = useState<'now' | 'today' | 'week' | 'live' | 'miro'>('now');
+  const [activeTab, setActiveTab] = useState<'now' | 'today' | 'week' | 'live' | 'community' | 'miro'>('now');
   const [unit, setUnit] = useState<'metric' | 'imperial'>('metric');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -132,16 +133,19 @@ export default function App() {
 
             {/* View 1: Home / Now View */}
             {activeTab === 'now' && (
-              <NowView
-                course={selectedCourse}
-                current={currentWeather}
-                score={golfabilityScore}
-                lightning={lightningAlert}
-                microcast={microcast}
-                unit={unit}
-                onNavigateTab={(tab) => setActiveTab(tab)}
-                onOpenPlanner={() => setPlannerModalOpen(true)}
-              />
+              <>
+                <NowView
+                  course={selectedCourse}
+                  current={currentWeather}
+                  score={golfabilityScore}
+                  lightning={lightningAlert}
+                  microcast={microcast}
+                  unit={unit}
+                  onNavigateTab={(tab) => setActiveTab(tab)}
+                  onOpenPlanner={() => setPlannerModalOpen(true)}
+                />
+                <DisqusComments course={selectedCourse} embedded={true} />
+              </>
             )}
 
             {/* View 2: Today View (24 Hours) */}
@@ -175,7 +179,12 @@ export default function App() {
               />
             )}
 
-            {/* View 5: Miro Product Strategy Board */}
+            {/* View 5: Clubhouse & Golfer Community Discussion (Disqus) */}
+            {activeTab === 'community' && (
+              <DisqusComments course={selectedCourse} embedded={false} />
+            )}
+
+            {/* View 6: Miro Product Strategy Board */}
             {activeTab === 'miro' && <StrategyMiroBoard />}
           </div>
         )}

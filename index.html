@@ -9,6 +9,34 @@
     <meta property="og:description" content="Actionable weather intelligence for golfers: Golfability Score (0-100), lightning siren warnings, 2-hour microcast, and Golden Tee-Time recommender." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Global Error Shield for Third-Party Cross-Origin Widgets (Disqus / Clarity) -->
+    <script>
+      window.addEventListener('error', function(event) {
+        if (event.message === 'Script error.' || (event.filename && (event.filename.includes('clarity.ms') || event.filename.includes('disqus.com') || event.filename.includes('disquscdn.com')))) {
+          // Suppress benign third-party analytics / widget cross-origin errors in preview iframe
+          event.stopImmediatePropagation?.();
+          return true;
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && (String(event.reason).includes('clarity') || String(event.reason).includes('disqus'))) {
+          event.stopImmediatePropagation?.();
+          event.preventDefault?.();
+        }
+      });
+    </script>
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+      (function(c,l,a,r,i,t,y){
+        try {
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        } catch(e) {
+          console.warn('Clarity initialization notice:', e);
+        }
+      })(window, document, "clarity", "script", "y8vcgvtq77");
+    </script>
   </head>
   <body>
     <div id="root"></div>
