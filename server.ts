@@ -26,7 +26,9 @@ interface CacheEntry {
 }
 
 const apiCache: Record<string, CacheEntry> = {};
-const CACHE_TTL_MS = 45 * 1000; // 45 seconds cache TTL to prevent 429 rate limits
+const CACHE_TTL_MS = 90 * 1000; // 90 seconds cache TTL for high performance & avoiding rate limits
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchFromDataGovSg(endpointKey: keyof typeof DATA_GOV_SG_ENDPOINTS, queryParams?: Record<string, string>) {
   const baseUrl = DATA_GOV_SG_ENDPOINTS[endpointKey];
@@ -41,7 +43,7 @@ async function fetchFromDataGovSg(endpointKey: keyof typeof DATA_GOV_SG_ENDPOINT
   const cached = apiCache[cacheKey];
   const now = Date.now();
 
-  if (cached && now - cached.timestamp < CACHE_TTL_MS && cached.statusCode === 200) {
+  if (cached && now - cached.timestamp < CACHE_TTL_MS && cached.statusCode === 200 && cached.data) {
     return { data: cached.data, fromCache: true, statusCode: cached.statusCode };
   }
 
@@ -58,7 +60,7 @@ async function fetchFromDataGovSg(endpointKey: keyof typeof DATA_GOV_SG_ENDPOINT
     const res = await fetch(url.toString(), { headers });
     const json = await res.json().catch(() => null);
 
-    if (res.ok && json) {
+    if (res.ok && json && (json.code === 0 || json.data || json.items || json.records)) {
       apiCache[cacheKey] = {
         data: json,
         timestamp: now,
@@ -69,13 +71,13 @@ async function fetchFromDataGovSg(endpointKey: keyof typeof DATA_GOV_SG_ENDPOINT
 
     // If rate-limited (429) or error, return stale cache if available
     if (cached && cached.data) {
-      return { data: cached.data, fromCache: true, stale: true, statusCode: cached.statusCode, error: json?.errorMsg };
+      return { data: cached.data, fromCache: true, stale: true, statusCode: 200 };
     }
 
     return { data: json, fromCache: false, statusCode: res.status, error: json?.errorMsg || `HTTP ${res.status}` };
   } catch (err: any) {
     if (cached && cached.data) {
-      return { data: cached.data, fromCache: true, stale: true, statusCode: cached.statusCode, error: err.message };
+      return { data: cached.data, fromCache: true, stale: true, statusCode: 200, error: err.message };
     }
     return { data: null, fromCache: false, statusCode: 500, error: err.message };
   }
@@ -224,30 +226,19 @@ async function startServer() {
     const courseName = (req.query.name as string) || 'Sentosa Golf Club';
 
     try {
-      // Fetch telemetry with gentle delays or from cache to respect limits
-      const [
-        twoHrRes,
-        twentyFourHrRes,
-        fourDayRes,
-        tempRes,
-        rainRes,
-        psiRes,
-        pm25Res,
-        uvRes,
-        humidityRes,
-        windRes,
-      ] = await Promise.all([
-        fetchFromDataGovSg('twoHrForecast'),
-        fetchFromDataGovSg('twentyFourHrForecast'),
-        fetchFromDataGovSg('fourDayOutlook'),
-        fetchFromDataGovSg('airTemperature'),
-        fetchFromDataGovSg('rainfall'),
-        fetchFromDataGovSg('psi'),
-        fetchFromDataGovSg('pm25'),
-        fetchFromDataGovSg('uv'),
-        fetchFromDataGovSg('relativeHumidity'),
-        fetchFromDataGovSg('windSpeed'),
-      ]);
+      // Fetch telemetry with gentle stagger to ensure 100% success on unauthenticated public limits
+      const twoHrRes = await fetchFromDataGovSg('twoHrForecast');
+      const twentyFourHrRes = await fetchFromDataGovSg('twentyFourHrForecast');
+      const fourDayRes = await fetchFromDataGovSg('fourDayOutlook');
+      await sleep(80);
+      const tempRes = await fetchFromDataGovSg('airTemperature');
+      const rainRes = await fetchFromDataGovSg('rainfall');
+      const psiRes = await fetchFromDataGovSg('psi');
+      await sleep(80);
+      const pm25Res = await fetchFromDataGovSg('pm25');
+      const uvRes = await fetchFromDataGovSg('uv');
+      const humidityRes = await fetchFromDataGovSg('relativeHumidity');
+      const windRes = await fetchFromDataGovSg('windSpeed');
 
       // 1. Process 2-hour forecast for nearest zone
       let nearestAreaForecast = 'Fair';

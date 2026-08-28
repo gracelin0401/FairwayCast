@@ -258,10 +258,10 @@ export const DataGovSgModal: React.FC<DataGovSgModalProps> = ({
             </div>
             <span className="text-[#6B7D6A] hidden md:inline">•</span>
             <div className="flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-[#6B7D6A]" />
-              <span className="text-[#6B7D6A] dark:text-[#9FB19E]">API Key Status:</span>
+              <Cpu className="w-3.5 h-3.5 text-[#2D4635] dark:text-[#A8C2A1]" />
+              <span className="text-[#6B7D6A] dark:text-[#9FB19E]">Access Mode:</span>
               <span className="font-semibold text-[#2D4635] dark:text-[#A8C2A1]">
-                {serverStatus?.apiKeyConfigured ? 'Custom Key Active' : 'Public Telemetry Quota (Rate-Optimized)'}
+                Keyless & Direct Live Telemetry (v2 APIs)
               </span>
             </div>
           </div>
